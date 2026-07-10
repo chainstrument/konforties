@@ -8,6 +8,8 @@ import { listEvaluations } from '@/lib/evaluations/store';
 import { computeScore } from '@/lib/scoring/engine';
 import type { Evaluation } from '@/types/scoring';
 
+import { ScoreComparisonRadarChart } from './ScoreComparisonRadarChart';
+
 interface ComparisonViewProps {
   evaluationIds: string[];
 }
@@ -42,51 +44,55 @@ export function ComparisonView({ evaluationIds }: ComparisonViewProps) {
   }));
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse text-sm">
-        <thead>
-          <tr>
-            <th
-              scope="col"
-              className="px-3 py-2 text-left font-medium text-zinc-500 dark:text-zinc-400"
-            >
-              Critère
-            </th>
-            {results.map(({ evaluation }) => (
+    <div className="flex flex-col gap-8">
+      <ScoreComparisonRadarChart evaluations={evaluations} />
+
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr>
               <th
-                key={evaluation.id}
                 scope="col"
-                className="border-b border-zinc-200 px-3 py-2 text-left font-medium dark:border-zinc-800"
+                className="px-3 py-2 text-left font-medium text-zinc-500 dark:text-zinc-400"
               >
-                {evaluation.name}
+                Critère
               </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          <tr className="border-b border-zinc-200 dark:border-zinc-800">
-            <td className="px-3 py-2 font-semibold">Score global</td>
-            {results.map(({ evaluation, globalScore }) => (
-              <td key={evaluation.id} className="px-3 py-2 font-semibold tabular-nums">
-                {globalScore}/100
-              </td>
-            ))}
-          </tr>
-          {categories.map((category) => (
-            <tr key={category.id} className="border-b border-zinc-100 dark:border-zinc-900">
-              <td className="px-3 py-2 text-zinc-600 dark:text-zinc-400">{category.label}</td>
-              {results.map(({ evaluation, categoryScores }) => {
-                const score = categoryScores.find((c) => c.categoryId === category.id)?.score;
-                return (
-                  <td key={evaluation.id} className="px-3 py-2 tabular-nums">
-                    {score ?? '—'}
-                  </td>
-                );
-              })}
+              {results.map(({ evaluation }) => (
+                <th
+                  key={evaluation.id}
+                  scope="col"
+                  className="border-b border-zinc-200 px-3 py-2 text-left font-medium dark:border-zinc-800"
+                >
+                  {evaluation.name}
+                </th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            <tr className="border-b border-zinc-200 dark:border-zinc-800">
+              <td className="px-3 py-2 font-semibold">Score global</td>
+              {results.map(({ evaluation, globalScore }) => (
+                <td key={evaluation.id} className="px-3 py-2 font-semibold tabular-nums">
+                  {globalScore}/100
+                </td>
+              ))}
+            </tr>
+            {categories.map((category) => (
+              <tr key={category.id} className="border-b border-zinc-100 dark:border-zinc-900">
+                <td className="px-3 py-2 text-zinc-600 dark:text-zinc-400">{category.label}</td>
+                {results.map(({ evaluation, categoryScores }) => {
+                  const score = categoryScores.find((c) => c.categoryId === category.id)?.score;
+                  return (
+                    <td key={evaluation.id} className="px-3 py-2 tabular-nums">
+                      {score ?? '—'}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
