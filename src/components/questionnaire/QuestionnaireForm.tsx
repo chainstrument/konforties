@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { categories, criteria } from '@/data/criteria';
+import { saveDraft } from '@/lib/questionnaire/draft';
 import type { Rating } from '@/types/scoring';
 
 interface StepAnswer {
@@ -23,6 +24,10 @@ const IMPORTANCE_LEVELS: { label: string; weight: number }[] = [
 export function QuestionnaireForm() {
   const [stepIndex, setStepIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, StepAnswer>>({});
+
+  useEffect(() => {
+    saveDraft({ stepIndex, answers });
+  }, [stepIndex, answers]);
 
   const isComplete = stepIndex >= criteria.length;
 
@@ -118,7 +123,8 @@ export function QuestionnaireForm() {
       <button
         type="button"
         onClick={goNext}
-        className="self-end rounded-full bg-zinc-900 px-6 py-2 font-medium text-white dark:bg-zinc-50 dark:text-zinc-900"
+        disabled={currentRating === null}
+        className="self-end rounded-full bg-zinc-900 px-6 py-2 font-medium text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40 dark:bg-zinc-50 dark:text-zinc-900"
       >
         Suivant
       </button>
