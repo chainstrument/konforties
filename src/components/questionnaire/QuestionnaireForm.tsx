@@ -1,10 +1,12 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import { categories, criteria } from '@/data/criteria';
 import { clearDraft, loadDraft, saveDraft } from '@/lib/questionnaire/draft';
 import { ScoreResult } from '@/components/results/ScoreResult';
+import { saveEvaluation } from '@/lib/evaluations/store';
 import type { Answer, Rating } from '@/types/scoring';
 
 interface StepAnswer {
@@ -26,6 +28,8 @@ export function QuestionnaireForm() {
   const [stepIndex, setStepIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, StepAnswer>>({});
   const [hydrated, setHydrated] = useState(false);
+  const [evaluationName, setEvaluationName] = useState('');
+  const [savedEvaluationId, setSavedEvaluationId] = useState<string | null>(null);
 
   useEffect(() => {
     // localStorage n'est disponible qu'après le montage côté client : on ne peut pas
@@ -55,6 +59,8 @@ export function QuestionnaireForm() {
     clearDraft();
     setAnswers({});
     setStepIndex(0);
+    setEvaluationName('');
+    setSavedEvaluationId(null);
   }
 
   if (isComplete) {
@@ -64,10 +70,52 @@ export function QuestionnaireForm() {
       return [{ criterionId: criterion.id, rating: answer.rating, weight: answer.weight }];
     });
 
+    function handleSave() {
+      if (!evaluationName.trim()) return;
+      const evaluation = saveEvaluation(evaluationName.trim(), finalAnswers);
+      setSavedEvaluationId(evaluation.id);
+    }
+
     return (
       <div className="flex flex-col items-center gap-6 text-center">
         <h1 className="text-2xl font-semibold">Merci d’avoir répondu au questionnaire !</h1>
         <ScoreResult answers={finalAnswers} />
+
+        {savedEvaluationId ? (
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Évaluation enregistrée. Retrouvez-la dans{' '}
+            <Link href="/evaluations" className="underline">
+              vos évaluations
+            </Link>
+            .
+          </p>
+        ) : (
+          <div className="flex w-full max-w-xs flex-col gap-2">
+            <label
+              htmlFor="evaluation-name"
+              className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
+            >
+              Nom de cette évaluation
+            </label>
+            <input
+              id="evaluation-name"
+              type="text"
+              value={evaluationName}
+              onChange={(e) => setEvaluationName(e.target.value)}
+              placeholder="Ex. Mon poste actuel"
+              className="rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+            />
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={!evaluationName.trim()}
+              className="rounded-full bg-zinc-900 px-6 py-2 font-medium text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40 dark:bg-zinc-50 dark:text-zinc-900"
+            >
+              Enregistrer
+            </button>
+          </div>
+        )}
+
         <button
           type="button"
           onClick={restart}
