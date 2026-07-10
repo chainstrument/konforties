@@ -4,7 +4,12 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import { categories, criteria } from '@/data/criteria';
-import { listEvaluations } from '@/lib/evaluations/store';
+import {
+  deleteEvaluation,
+  duplicateEvaluation,
+  listEvaluations,
+  renameEvaluation,
+} from '@/lib/evaluations/store';
 import { computeScore } from '@/lib/scoring/engine';
 import type { Evaluation } from '@/types/scoring';
 
@@ -15,6 +20,28 @@ export function EvaluationsList() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setEvaluations(listEvaluations());
   }, []);
+
+  function refresh() {
+    setEvaluations(listEvaluations());
+  }
+
+  function handleRename(evaluation: Evaluation) {
+    const name = window.prompt('Nouveau nom de l’évaluation', evaluation.name);
+    if (!name || !name.trim()) return;
+    renameEvaluation(evaluation.id, name.trim());
+    refresh();
+  }
+
+  function handleDuplicate(evaluation: Evaluation) {
+    duplicateEvaluation(evaluation.id);
+    refresh();
+  }
+
+  function handleDelete(evaluation: Evaluation) {
+    if (!window.confirm(`Supprimer « ${evaluation.name} » ?`)) return;
+    deleteEvaluation(evaluation.id);
+    refresh();
+  }
 
   if (evaluations.length === 0) {
     return (
@@ -35,7 +62,7 @@ export function EvaluationsList() {
         return (
           <li
             key={evaluation.id}
-            className="flex items-center justify-between rounded-lg border border-zinc-200 px-4 py-3 dark:border-zinc-800"
+            className="flex flex-col gap-3 rounded-lg border border-zinc-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800"
           >
             <div>
               <p className="font-medium">{evaluation.name}</p>
@@ -43,10 +70,36 @@ export function EvaluationsList() {
                 Mise à jour le {new Date(evaluation.updatedAt).toLocaleDateString('fr-FR')}
               </p>
             </div>
-            <p className="text-lg font-semibold tabular-nums">
-              {globalScore}
-              <span className="text-sm font-normal text-zinc-500 dark:text-zinc-400">/100</span>
-            </p>
+
+            <div className="flex items-center gap-4">
+              <p className="text-lg font-semibold tabular-nums">
+                {globalScore}
+                <span className="text-sm font-normal text-zinc-500 dark:text-zinc-400">/100</span>
+              </p>
+              <div className="flex gap-2 text-sm">
+                <button
+                  type="button"
+                  onClick={() => handleRename(evaluation)}
+                  className="text-zinc-600 underline-offset-2 hover:underline dark:text-zinc-400"
+                >
+                  Renommer
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDuplicate(evaluation)}
+                  className="text-zinc-600 underline-offset-2 hover:underline dark:text-zinc-400"
+                >
+                  Dupliquer
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDelete(evaluation)}
+                  className="text-red-600 underline-offset-2 hover:underline dark:text-red-400"
+                >
+                  Supprimer
+                </button>
+              </div>
+            </div>
           </li>
         );
       })}
