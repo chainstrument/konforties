@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import { categories, criteria } from '@/data/criteria';
-import { saveDraft } from '@/lib/questionnaire/draft';
+import { clearDraft, loadDraft, saveDraft } from '@/lib/questionnaire/draft';
 import type { Rating } from '@/types/scoring';
 
 interface StepAnswer {
@@ -24,12 +24,37 @@ const IMPORTANCE_LEVELS: { label: string; weight: number }[] = [
 export function QuestionnaireForm() {
   const [stepIndex, setStepIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, StepAnswer>>({});
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
+    // localStorage n'est disponible qu'après le montage côté client : on ne peut pas
+    // lire le brouillon pendant le rendu initial (SSR) sans provoquer un mismatch
+    // d'hydratation, donc on l'applique ici et on tolère le re-rendu que ça déclenche.
+    const draft = loadDraft();
+    if (draft) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setStepIndex(Math.min(draft.stepIndex, criteria.length));
+      setAnswers(draft.answers as Record<string, StepAnswer>);
+    }
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
     saveDraft({ stepIndex, answers });
-  }, [stepIndex, answers]);
+  }, [hydrated, stepIndex, answers]);
 
   const isComplete = stepIndex >= criteria.length;
+
+  useEffect(() => {
+    if (isComplete) clearDraft();
+  }, [isComplete]);
+
+  function restart() {
+    clearDraft();
+    setAnswers({});
+    setStepIndex(0);
+  }
 
   if (isComplete) {
     return (
@@ -38,6 +63,13 @@ export function QuestionnaireForm() {
         <p className="text-zinc-600 dark:text-zinc-400">
           Le calcul et l’affichage de votre score arrivent dans une prochaine étape.
         </p>
+        <button
+          type="button"
+          onClick={restart}
+          className="rounded-full border border-zinc-300 px-6 py-2 font-medium text-zinc-700 dark:border-zinc-700 dark:text-zinc-300"
+        >
+          Recommencer
+        </button>
       </div>
     );
   }
@@ -64,6 +96,10 @@ export function QuestionnaireForm() {
 
   function goNext() {
     setStepIndex((i) => i + 1);
+  }
+
+  function goPrev() {
+    setStepIndex((i) => Math.max(0, i - 1));
   }
 
   return (
@@ -120,14 +156,24 @@ export function QuestionnaireForm() {
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={goNext}
-        disabled={currentRating === null}
-        className="self-end rounded-full bg-zinc-900 px-6 py-2 font-medium text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40 dark:bg-zinc-50 dark:text-zinc-900"
-      >
-        Suivant
-      </button>
+      <div className="flex justify-between">
+        <button
+          type="button"
+          onClick={goPrev}
+          disabled={stepIndex === 0}
+          className="rounded-full border border-zinc-300 px-6 py-2 font-medium text-zinc-700 transition-opacity disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-300"
+        >
+          Précédent
+        </button>
+        <button
+          type="button"
+          onClick={goNext}
+          disabled={currentRating === null}
+          className="rounded-full bg-zinc-900 px-6 py-2 font-medium text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40 dark:bg-zinc-50 dark:text-zinc-900"
+        >
+          Suivant
+        </button>
+      </div>
     </div>
   );
 }
