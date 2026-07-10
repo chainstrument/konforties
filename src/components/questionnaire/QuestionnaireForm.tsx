@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 
 import { categories, criteria } from '@/data/criteria';
 import { clearDraft, loadDraft, saveDraft } from '@/lib/questionnaire/draft';
-import type { Rating } from '@/types/scoring';
+import { ScoreResult } from '@/components/results/ScoreResult';
+import type { Answer, Rating } from '@/types/scoring';
 
 interface StepAnswer {
   rating: Rating | null;
@@ -57,12 +58,16 @@ export function QuestionnaireForm() {
   }
 
   if (isComplete) {
+    const finalAnswers: Answer[] = criteria.flatMap((criterion) => {
+      const answer = answers[criterion.id];
+      if (!answer?.rating) return [];
+      return [{ criterionId: criterion.id, rating: answer.rating, weight: answer.weight }];
+    });
+
     return (
-      <div className="flex flex-col items-center gap-4 text-center">
+      <div className="flex flex-col items-center gap-6 text-center">
         <h1 className="text-2xl font-semibold">Merci d’avoir répondu au questionnaire !</h1>
-        <p className="text-zinc-600 dark:text-zinc-400">
-          Le calcul et l’affichage de votre score arrivent dans une prochaine étape.
-        </p>
+        <ScoreResult answers={finalAnswers} />
         <button
           type="button"
           onClick={restart}
