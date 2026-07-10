@@ -7,9 +7,18 @@ import type { Rating } from '@/types/scoring';
 
 interface StepAnswer {
   rating: Rating | null;
+  weight: number;
 }
 
 const RATINGS: Rating[] = [1, 2, 3, 4, 5];
+
+const DEFAULT_WEIGHT = 2;
+
+const IMPORTANCE_LEVELS: { label: string; weight: number }[] = [
+  { label: 'Peu important', weight: 1 },
+  { label: 'Important', weight: 2 },
+  { label: 'Très important', weight: 3 },
+];
 
 export function QuestionnaireForm() {
   const [stepIndex, setStepIndex] = useState(0);
@@ -30,10 +39,22 @@ export function QuestionnaireForm() {
 
   const criterion = criteria[stepIndex];
   const category = categories.find((c) => c.id === criterion.categoryId);
-  const currentRating = answers[criterion.id]?.rating ?? null;
+  const currentAnswer = answers[criterion.id];
+  const currentRating = currentAnswer?.rating ?? null;
+  const currentWeight = currentAnswer?.weight ?? DEFAULT_WEIGHT;
 
   function selectRating(rating: Rating) {
-    setAnswers((prev) => ({ ...prev, [criterion.id]: { rating } }));
+    setAnswers((prev) => ({
+      ...prev,
+      [criterion.id]: { rating, weight: prev[criterion.id]?.weight ?? DEFAULT_WEIGHT },
+    }));
+  }
+
+  function selectWeight(weight: number) {
+    setAnswers((prev) => ({
+      ...prev,
+      [criterion.id]: { rating: prev[criterion.id]?.rating ?? null, weight },
+    }));
   }
 
   function goNext() {
@@ -69,6 +90,29 @@ export function QuestionnaireForm() {
             {rating}
           </button>
         ))}
+      </div>
+
+      <div>
+        <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+          Quelle importance ce critère a-t-il pour vous ?
+        </p>
+        <div className="mt-2 flex gap-2">
+          {IMPORTANCE_LEVELS.map((level) => (
+            <button
+              key={level.weight}
+              type="button"
+              onClick={() => selectWeight(level.weight)}
+              aria-pressed={currentWeight === level.weight}
+              className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+                currentWeight === level.weight
+                  ? 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-50 dark:bg-zinc-50 dark:text-zinc-900'
+                  : 'border-zinc-300 text-zinc-700 hover:border-zinc-500 dark:border-zinc-700 dark:text-zinc-300'
+              }`}
+            >
+              {level.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <button
