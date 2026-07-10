@@ -54,3 +54,16 @@ pnpm dev
 ```
 
 Ouvrir [http://localhost:3000](http://localhost:3000).
+
+### Structure du projet
+
+```
+src/
+  app/         # Routes et pages (Next.js App Router)
+  components/  # Composants UI réutilisables
+  lib/         # Logique métier : moteur de scoring, stockage local, etc.
+  types/       # Types TypeScript partagés
+  data/        # Données statiques (critères et catégories par défaut)
+```
+
+`components`, `lib`, `types` et `data` seront peuplés au fil des epics suivants (moteur de scoring, questionnaire, etc.).
