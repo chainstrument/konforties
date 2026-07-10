@@ -2,6 +2,8 @@ import { categories, criteria } from '@/data/criteria';
 import { computeScore } from '@/lib/scoring/engine';
 import type { Answer } from '@/types/scoring';
 
+import { ScoreRadarChart } from './ScoreRadarChart';
+
 interface ScoreResultProps {
   answers: Answer[];
 }
@@ -15,6 +17,7 @@ function getScoreLabel(score: number): string {
 
 export function ScoreResult({ answers }: ScoreResultProps) {
   const { globalScore, categoryScores } = computeScore(answers, criteria, categories);
+  const categoryLabels = Object.fromEntries(categories.map((c) => [c.id, c.label]));
 
   return (
     <div className="flex w-full max-w-xl flex-col items-center gap-8">
@@ -45,6 +48,8 @@ export function ScoreResult({ answers }: ScoreResultProps) {
           );
         })}
       </div>
+
+      <ScoreRadarChart categoryScores={categoryScores} categoryLabels={categoryLabels} />
     </div>
   );
 }
